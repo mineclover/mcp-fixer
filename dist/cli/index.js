@@ -16,6 +16,7 @@ import { setupAuthCommands } from './commands/auth.js';
 import { setupQueryCommands } from './commands/query.js';
 import { setupCollectorCommands } from './commands/collector.js';
 import { setupSystemCommands } from './commands/system.js';
+import { createFixedCommand } from './commands/fixed.js';
 // Output formatting utilities
 export class OutputFormatter {
     format;
@@ -205,6 +206,9 @@ async function main() {
         setupQueryCommands(program, getServices);
         setupCollectorCommands(program, getServices);
         setupSystemCommands(program, getServices);
+        // Setup fixed interface command
+        const fixedCommand = createFixedCommand(getServices);
+        program.addCommand(fixedCommand);
     }
     catch (error) {
         console.error(chalk.red('Failed to setup commands:'), error);
