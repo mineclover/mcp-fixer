@@ -1,16 +1,16 @@
 # mcp-fixer Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-09-09
+Auto-generated from all feature plans. Last updated: 2025-09-10
 
 ## Active Technologies
 
-**Current Feature**: 001-mcp-tool-mcp (MCP Tool Management & Query System)
+**Current Feature**: 002-claude-mcp-add (MCP Server Fixed Interface Optimization) - extends 001
 
 - **Language/Version**: TypeScript with Bun runtime
-- **Primary Dependencies**: @modelcontextprotocol/sdk, LangChain/LangGraph (optional), Zod for validation
-- **Storage**: bun:sqlite (local-first storage)
-- **Testing**: Bun test framework with integration tests
-- **Project Type**: single (CLI tool with database backend)
+- **Primary Dependencies**: @modelcontextprotocol/sdk, Zod validation, OAuth 2.0 client library, AJV for JSON Schema
+- **Storage**: bun:sqlite (extends existing schema with fixed interfaces and OAuth tokens)
+- **Testing**: Bun test framework with contract-first TDD approach
+- **Project Type**: single (extends existing CLI tool with fixed interface optimization)
 
 ## Project Structure
 
@@ -38,6 +38,8 @@ tests/
 - **auth-manager**: Credential storage and authentication
 - **data-collector**: Custom collector registration and execution
 - **cli-interface**: Command-line interface
+- **fixed-interface-manager**: Interface caching and optimization (NEW in 002)
+- **oauth-flow-manager**: OAuth 2.0 authentication handling (NEW in 002)
 
 ## Commands
 
@@ -62,6 +64,14 @@ mcp-tool collector run [options] <name>
 # System Commands
 mcp-tool init [options] [path]
 mcp-tool status [options]
+
+# Fixed Interface Management (NEW in 002)
+mcp-tool fixed register <tool-id> <operation-name> [options]
+mcp-tool fixed list [tool-id] [options]
+mcp-tool fixed use <interface-name> [parameters] [options]
+mcp-tool fixed test <interface-name> [options]
+mcp-tool fixed auth <tool-id> [options]
+mcp-tool fixed stats [interface-name] [options]
 ```
 
 ## Core Principles
@@ -92,6 +102,7 @@ Key relationships:
 
 ## Recent Changes
 
+- **002-claude-mcp-add**: Added fixed interface optimization + OAuth 2.0 flows + performance analytics
 - **001-mcp-tool-mcp**: Added TypeScript + Bun + bun:sqlite + MCP SDK + optional LangChain integration
 
 ## Performance Goals

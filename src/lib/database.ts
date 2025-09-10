@@ -26,20 +26,49 @@ export class DatabaseManager {
   }
 
   private configure(): void {
-    // Enable foreign key constraints
-    this.db.exec('PRAGMA foreign_keys = ON');
-    
-    // Set journal mode
-    this.db.exec(`PRAGMA journal_mode = ${this.config.journalMode}`);
-    
-    // Set busy timeout
-    this.db.exec(`PRAGMA busy_timeout = ${this.config.busyTimeout}`);
-    
-    // Optimize for performance
-    this.db.exec('PRAGMA synchronous = NORMAL');
-    this.db.exec('PRAGMA cache_size = 10000');
-    this.db.exec('PRAGMA temp_store = MEMORY');
-    this.db.exec('PRAGMA mmap_size = 268435456'); // 256MB
+    try {
+      // Enable foreign key constraints
+      this.db.exec('PRAGMA foreign_keys = ON');
+      
+      // Set journal mode with retry logic
+      let retryCount = 0;
+      while (retryCount < 3) {
+        try {
+          this.db.exec(`PRAGMA journal_mode = ${this.config.journalMode}`);
+          break;
+        } catch (error: any) {
+          if (error.code === 'SQLITE_BUSY' || error.code === 'SQLITE_BUSY_RECOVERY') {
+            retryCount++;
+            if (retryCount >= 3) {
+              // Fall back to DELETE mode for tests
+              this.db.exec('PRAGMA journal_mode = DELETE');
+              break;
+            }
+            // Wait a bit before retrying
+            Bun.sleepSync(100);
+          } else {
+            throw error;
+          }
+        }
+      }
+      
+      // Set busy timeout
+      this.db.exec(`PRAGMA busy_timeout = ${this.config.busyTimeout}`);
+      
+      // Optimize for performance
+      this.db.exec('PRAGMA synchronous = NORMAL');
+      this.db.exec('PRAGMA cache_size = 10000');
+      this.db.exec('PRAGMA temp_store = MEMORY');
+      this.db.exec('PRAGMA mmap_size = 268435456'); // 256MB
+      
+      // Add connection pooling configuration
+      this.db.exec('PRAGMA busy_timeout = 30000');
+    } catch (error: any) {
+      console.warn('Database configuration warning:', error.message);
+      // Continue with minimal configuration
+      this.db.exec('PRAGMA foreign_keys = ON');
+      this.db.exec('PRAGMA busy_timeout = 30000');
+    }
   }
 
   async initialize(): Promise<void> {
@@ -47,7 +76,9 @@ export class DatabaseManager {
       // Check if database is already initialized
       const isInitialized = await this.isInitialized();
       if (isInitialized) {
-        console.log('Database already initialized');
+        if (process.env.NODE_ENV !== 'test' && process.env.BUN_ENV !== 'test') {
+          console.log('Database already initialized');
+        }
         return;
       }
 
@@ -66,7 +97,9 @@ export class DatabaseManager {
         }
       })();
 
-      console.log('Database initialized successfully');
+      if (process.env.NODE_ENV !== 'test' && process.env.BUN_ENV !== 'test') {
+        console.log('Database initialized successfully');
+      }
     } catch (error) {
       console.error('Failed to initialize database:', error);
       throw error;
@@ -106,7 +139,9 @@ export class DatabaseManager {
         return false;
       }
 
-      console.log(`Database healthy, schema version: ${versionResult.version}`);
+      if (process.env.NODE_ENV !== 'test' && process.env.BUN_ENV !== 'test') {
+        console.log(`Database healthy, schema version: ${versionResult.version}`);
+      }
       return true;
     } catch (error) {
       console.error('Database health check failed:', error);
@@ -145,6 +180,21 @@ export class DatabaseManager {
   async addSchemaVersion(version: string, description: string): Promise<void> {
     const stmt = this.db.prepare('INSERT INTO schema_version (version, description) VALUES (?, ?)');
     stmt.run(version, description);
+  }
+
+  async runMigration(migrationSql: string, version: string, description: string): Promise<void> {
+    try {
+      // Run migration in transaction
+      this.transaction(() => {
+        this.db.exec(migrationSql);
+        const stmt = this.db.prepare('INSERT INTO schema_version (version, description) VALUES (?, ?)');
+        stmt.run(version, description);
+      });
+      console.log(`Migration ${version} applied successfully: ${description}`);
+    } catch (error) {
+      console.error(`Migration ${version} failed:`, error);
+      throw error;
+    }
   }
 
   // Backup utilities
@@ -197,8 +247,25 @@ export class DatabaseManager {
 
 // Singleton instance for application use
 let dbInstance: DatabaseManager | null = null;
+let testInstances: Map<string, DatabaseManager> = new Map();
 
 export function getDatabase(config?: DatabaseConfig): DatabaseManager {
+  // For test environment, create isolated instances
+  if (process.env.NODE_ENV === 'test' || process.env.BUN_ENV === 'test') {
+    const testId = config?.path ?? `test-${Date.now()}-${Math.random()}`;
+    if (!testInstances.has(testId)) {
+      const testConfig: DatabaseConfig = {
+        path: testId,
+        enableWAL: false, // Disable WAL for tests to prevent locking issues
+        journalMode: 'MEMORY', // Use memory mode for tests
+        busyTimeout: 5000,
+        ...config,
+      };
+      testInstances.set(testId, new DatabaseManager(testConfig));
+    }
+    return testInstances.get(testId)!;
+  }
+  
   if (!dbInstance) {
     const defaultConfig: DatabaseConfig = {
       path: process.env.DB_PATH ?? join(process.cwd(), 'data', 'mcp-tool.db'),
@@ -232,4 +299,18 @@ export async function initializeDatabase(config?: DatabaseConfig): Promise<Datab
   }
   
   return db;
+}
+
+// Test cleanup function
+export function clearTestInstances(): void {
+  if (process.env.NODE_ENV === 'test' || process.env.BUN_ENV === 'test') {
+    for (const [id, instance] of testInstances) {
+      try {
+        instance.close();
+      } catch (error) {
+        // Ignore close errors in tests
+      }
+    }
+    testInstances.clear();
+  }
 }

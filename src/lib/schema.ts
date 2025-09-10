@@ -125,6 +125,84 @@ export const SCHEMA_STATEMENTS = [
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     CHECK (category IN ('security', 'performance', 'discovery', 'logging', 'general'))
   )`,
+  
+  // Fixed interfaces table for cached MCP tool operations
+  `CREATE TABLE fixed_interfaces (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    tool_id TEXT NOT NULL,
+    display_name TEXT,
+    description TEXT,
+    schema_json TEXT NOT NULL,
+    parameters_json TEXT,
+    response_schema_json TEXT,
+    version TEXT NOT NULL DEFAULT '1.0.0',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_validated DATETIME,
+    validation_status TEXT DEFAULT 'pending' CHECK (validation_status IN ('pending', 'valid', 'invalid', 'deprecated')),
+    performance_score REAL DEFAULT 0.0,
+    execution_count INTEGER DEFAULT 0,
+    success_count INTEGER DEFAULT 0,
+    average_response_time REAL DEFAULT 0.0,
+    FOREIGN KEY(tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    UNIQUE(name, tool_id)
+  )`,
+  
+  // OAuth configurations table
+  `CREATE TABLE oauth_configurations (
+    id TEXT PRIMARY KEY,
+    tool_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    client_secret TEXT, -- encrypted
+    auth_url TEXT NOT NULL,
+    token_url TEXT NOT NULL,
+    scopes TEXT,
+    redirect_uri TEXT NOT NULL,
+    pkce_enabled BOOLEAN DEFAULT TRUE,
+    state_expires_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    UNIQUE(tool_id, provider)
+  )`,
+  
+  // OAuth tokens table
+  `CREATE TABLE oauth_tokens (
+    id TEXT PRIMARY KEY,
+    tool_id TEXT NOT NULL,
+    config_id TEXT NOT NULL,
+    access_token TEXT NOT NULL, -- encrypted
+    refresh_token TEXT, -- encrypted
+    token_type TEXT DEFAULT 'Bearer',
+    expires_at DATETIME,
+    scopes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_refreshed DATETIME,
+    FOREIGN KEY(tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    FOREIGN KEY(config_id) REFERENCES oauth_configurations(id) ON DELETE CASCADE
+  )`,
+  
+  // Performance metrics table
+  `CREATE TABLE performance_metrics (
+    id TEXT PRIMARY KEY,
+    interface_id TEXT,
+    tool_id TEXT NOT NULL,
+    access_type TEXT NOT NULL CHECK (access_type IN ('fixed', 'dynamic', 'discovery')),
+    operation_name TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    response_time_ms REAL NOT NULL,
+    success BOOLEAN NOT NULL,
+    error_details TEXT,
+    parameters_hash TEXT,
+    response_size INTEGER,
+    cpu_time_ms REAL,
+    memory_mb REAL,
+    FOREIGN KEY(tool_id) REFERENCES tools(id) ON DELETE CASCADE,
+    FOREIGN KEY(interface_id) REFERENCES fixed_interfaces(id) ON DELETE CASCADE
+  )`,
 ];
 
 // Index creation statements
@@ -159,6 +237,29 @@ export const INDEX_STATEMENTS = [
   'CREATE INDEX idx_audit_log_entity_id ON audit_log(entity_id)',
   
   'CREATE INDEX idx_configuration_category ON configuration(category)',
+  
+  // Fixed interfaces indexes
+  'CREATE INDEX idx_fixed_interfaces_tool_id ON fixed_interfaces(tool_id)',
+  'CREATE INDEX idx_fixed_interfaces_name ON fixed_interfaces(name)',
+  'CREATE INDEX idx_fixed_interfaces_is_active ON fixed_interfaces(is_active)',
+  'CREATE INDEX idx_fixed_interfaces_validation_status ON fixed_interfaces(validation_status)',
+  'CREATE INDEX idx_fixed_interfaces_performance_score ON fixed_interfaces(performance_score)',
+  'CREATE INDEX idx_fixed_interfaces_last_validated ON fixed_interfaces(last_validated)',
+  
+  // OAuth indexes
+  'CREATE INDEX idx_oauth_configurations_tool_id ON oauth_configurations(tool_id)',
+  'CREATE INDEX idx_oauth_configurations_provider ON oauth_configurations(provider)',
+  'CREATE INDEX idx_oauth_tokens_tool_id ON oauth_tokens(tool_id)',
+  'CREATE INDEX idx_oauth_tokens_config_id ON oauth_tokens(config_id)',
+  'CREATE INDEX idx_oauth_tokens_expires_at ON oauth_tokens(expires_at)',
+  
+  // Performance metrics indexes
+  'CREATE INDEX idx_performance_metrics_interface_id ON performance_metrics(interface_id)',
+  'CREATE INDEX idx_performance_metrics_tool_id ON performance_metrics(tool_id)',
+  'CREATE INDEX idx_performance_metrics_access_type ON performance_metrics(access_type)',
+  'CREATE INDEX idx_performance_metrics_timestamp ON performance_metrics(timestamp)',
+  'CREATE INDEX idx_performance_metrics_success ON performance_metrics(success)',
+  'CREATE INDEX idx_performance_metrics_composite ON performance_metrics(tool_id, access_type, timestamp)',
 ];
 
 // Trigger creation statements
@@ -208,6 +309,39 @@ export const TRIGGER_STATEMENTS = [
        UPDATE credentials 
        SET usage_count = usage_count + 1 
        WHERE id = NEW.id;
+   END`,
+
+  // Fixed interfaces triggers
+  `CREATE TRIGGER update_fixed_interfaces_timestamp 
+   AFTER UPDATE ON fixed_interfaces
+   BEGIN
+       UPDATE fixed_interfaces SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+   END`,
+
+  `CREATE TRIGGER update_fixed_interface_performance
+   AFTER UPDATE ON fixed_interfaces
+   WHEN NEW.execution_count > OLD.execution_count
+   BEGIN
+       UPDATE fixed_interfaces 
+       SET 
+           success_count = CASE WHEN NEW.success_count > OLD.success_count THEN NEW.success_count ELSE OLD.success_count END,
+           average_response_time = (OLD.average_response_time * OLD.execution_count + NEW.average_response_time) / NEW.execution_count,
+           performance_score = (NEW.success_count * 1.0 / NEW.execution_count) * 100.0
+       WHERE id = NEW.id;
+   END`,
+
+  // OAuth triggers  
+  `CREATE TRIGGER update_oauth_configurations_timestamp 
+   AFTER UPDATE ON oauth_configurations
+   BEGIN
+       UPDATE oauth_configurations SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+   END`,
+
+  `CREATE TRIGGER update_oauth_tokens_refresh_timestamp
+   AFTER UPDATE ON oauth_tokens
+   WHEN NEW.access_token != OLD.access_token
+   BEGIN
+       UPDATE oauth_tokens SET last_refreshed = CURRENT_TIMESTAMP WHERE id = NEW.id;
    END`,
 ];
 
@@ -300,6 +434,20 @@ export const INITIAL_DATA_STATEMENTS = [
    ('logging.max_files', '5', 'logging', 'Maximum number of log files to retain')`,
 ];
 
+// Sample data for testing
+export const SAMPLE_DATA_STATEMENTS = [
+  // Sample tool
+  `INSERT OR IGNORE INTO tools (id, name, version, description, endpoint, capabilities, auth_config, status) VALUES
+   ('notion-mcp', 'Notion MCP Server', '1.0.0', 'MCP server for Notion integration', 
+    'notion://localhost:3000', '["search", "create", "update"]', '{"type": "oauth", "provider": "notion"}', 'active')`,
+  
+  // Sample fixed interface
+  `INSERT OR IGNORE INTO fixed_interfaces (id, name, tool_id, display_name, description, schema_json, version, is_active) VALUES
+   ('notion-search', 'search_pages', 'notion-mcp', 'Notion Page Search', 'Search pages in Notion workspace',
+    '{"type": "object", "properties": {"query": {"type": "string"}, "limit": {"type": "number", "default": 10}}}',
+    '1.0.0', TRUE)`,
+];
+
 // All statements in order
 export const ALL_SCHEMA_STATEMENTS = [
   ...SCHEMA_STATEMENTS,
@@ -307,4 +455,5 @@ export const ALL_SCHEMA_STATEMENTS = [
   ...TRIGGER_STATEMENTS,
   ...VIEW_STATEMENTS,
   ...INITIAL_DATA_STATEMENTS,
+  ...SAMPLE_DATA_STATEMENTS,
 ];
