@@ -1,0 +1,19 @@
+[install]
+cache = false
+registry = "https://registry.npmjs.org/"
+
+[test]
+root = "./tests"
+preload = ["./tests/setup.ts"]
+timeout = 30000
+
+[run]
+# bun = "latest"
+
+[build]
+target = "node"
+format = "esm"
+splitting = false
+sourcemap = "external"
+outdir = "./dist"
+entrypoints = ["./src/cli/index.ts"]
