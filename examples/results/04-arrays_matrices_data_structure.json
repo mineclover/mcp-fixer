@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 59,
+  "timestamp": "2025-09-11T16:21:24Z",
+  "data": {
+    "documentation": "Pine Script documentation for: arrays matrices data structures",
+    "codeSnippets": [
+      {
+        "title": "Example for arrays matrices data structures",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for arrays matrices data structures",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "arrays matrices data structures"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": false
+}

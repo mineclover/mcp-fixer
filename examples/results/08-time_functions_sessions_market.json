@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 152,
+  "timestamp": "2025-09-11T16:21:24Z",
+  "data": {
+    "documentation": "Pine Script documentation for: time functions sessions market hours",
+    "codeSnippets": [
+      {
+        "title": "Example for time functions sessions market hours",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for time functions sessions market hours",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "time functions sessions market hours"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": true
+}

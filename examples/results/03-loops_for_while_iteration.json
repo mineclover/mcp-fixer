@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 55,
+  "timestamp": "2025-09-11T16:21:24Z",
+  "data": {
+    "documentation": "Pine Script documentation for: loops for while iteration",
+    "codeSnippets": [
+      {
+        "title": "Example for loops for while iteration",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for loops for while iteration",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "loops for while iteration"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": false
+}

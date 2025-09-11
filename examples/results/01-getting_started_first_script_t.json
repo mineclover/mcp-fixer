@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 191,
+  "timestamp": "2025-09-11T16:21:24Z",
+  "data": {
+    "documentation": "Pine Script documentation for: getting started first script tutorial",
+    "codeSnippets": [
+      {
+        "title": "Example for getting started first script tutorial",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for getting started first script tutorial",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "getting started first script tutorial"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": false
+}

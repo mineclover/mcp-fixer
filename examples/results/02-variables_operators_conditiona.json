@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 108,
+  "timestamp": "2025-09-11T16:21:24Z",
+  "data": {
+    "documentation": "Pine Script documentation for: variables operators conditional statements",
+    "codeSnippets": [
+      {
+        "title": "Example for variables operators conditional statements",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for variables operators conditional statements",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "variables operators conditional statements"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": true
+}

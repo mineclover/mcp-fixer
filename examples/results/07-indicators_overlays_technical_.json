@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 174,
+  "timestamp": "2025-09-11T16:21:24Z",
+  "data": {
+    "documentation": "Pine Script documentation for: indicators overlays technical analysis",
+    "codeSnippets": [
+      {
+        "title": "Example for indicators overlays technical analysis",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for indicators overlays technical analysis",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "indicators overlays technical analysis"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": false
+}

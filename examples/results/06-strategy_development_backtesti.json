@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 228,
+  "timestamp": "2025-09-11T16:21:24Z",
+  "data": {
+    "documentation": "Pine Script documentation for: strategy development backtesting",
+    "codeSnippets": [
+      {
+        "title": "Example for strategy development backtesting",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for strategy development backtesting",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "strategy development backtesting"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": true
+}

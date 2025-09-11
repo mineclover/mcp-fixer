@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 128,
+  "timestamp": "2025-09-11T16:21:25Z",
+  "data": {
+    "documentation": "Pine Script documentation for: debugging optimization performance",
+    "codeSnippets": [
+      {
+        "title": "Example for debugging optimization performance",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for debugging optimization performance",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "debugging optimization performance"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": false
+}

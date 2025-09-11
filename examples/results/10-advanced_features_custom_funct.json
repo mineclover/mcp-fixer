@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "responseTime": 74,
+  "timestamp": "2025-09-11T16:21:25Z",
+  "data": {
+    "documentation": "Pine Script documentation for: advanced features custom functions",
+    "codeSnippets": [
+      {
+        "title": "Example for advanced features custom functions",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\\"Demo\\")\n// Code for advanced features custom functions",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 1,
+      "topic": "advanced features custom functions"
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": true
+}

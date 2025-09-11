@@ -1,0 +1,31 @@
+{
+  "success": true,
+  "responseTime": 150,
+  "timestamp": "2025-09-11T16:20:00Z",
+  "data": {
+    "documentation": "Pine Script 첫 번째 스크립트 작성 가이드...",
+    "codeSnippets": [
+      {
+        "title": "기본 인디케이터 스크립트",
+        "language": "Pine Script",
+        "code": "@version=6\nindicator(\"My First Script\", overlay=true)\nplot(close, \"Close Price\", color=color.blue)",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      },
+      {
+        "title": "변수 선언과 사용",
+        "language": "Pine Script", 
+        "code": "float a = high\nfloat b = low\nplot(a, \"High\", color=color.green)",
+        "source": "https://www.tradingview.com/pine-script-docs/"
+      }
+    ],
+    "metadata": {
+      "totalSnippets": 2,
+      "libraryInfo": {
+        "name": "TradingView Pine Script Documentation",
+        "version": "v6"
+      }
+    }
+  },
+  "interfaceName": "tradingview-pinescript-search",
+  "cached": false
+}
